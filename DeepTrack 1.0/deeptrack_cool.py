@@ -411,8 +411,8 @@ def train_deep_learning_network(
             iteration_time = time() - initial_time
 
             # record training history
-            mse = history.history['mean_squared_error'][0] * half_image_size**2
-            mae = history.history['mean_absolute_error'][0] * half_image_size
+            mse = history.history['mse'][0] * half_image_size**2
+            mae = history.history['mae'][0] * half_image_size
                         
             training_history['Sample Size'].append(sample_size)
             training_history['Iteration Number'].append(iteration)
