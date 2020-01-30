@@ -169,7 +169,7 @@ def get_image_generator(image_parameters_function=lambda : get_image_parameters(
         
     Outputs:
     image_number: image number in the current generation cycle
-    image: image of the particles [2D numpy array of real numebrs betwen 0 and 1]
+    image: image of the particles [2D numpy array of real numbers betwen 0 and 1]
     image_parameters: list with the values of the image parameters in a dictionary:
         image_parameters['Particle Center X List']
         image_parameters['Particle Center Y List']
@@ -247,9 +247,8 @@ def plot_sample_image(image, image_parameters, figsize=(15,5)):
     plt.text(0, .6, 'gradient intensity = %5.2f' % gradient_intensity, fontsize=16)
     plt.text(0, .5, 'gradient direction = %5.2f' % gradient_direction, fontsize=16)
     plt.axis('off')
-
     plt.show()
-    
+
 def create_deep_learning_network(
     input_shape = (51, 51, 1),
     conv_layers_dimensions = (16, 32, 64, 128), 
@@ -1156,7 +1155,6 @@ def get_target_binary_image(image_parameters):
     particle_radius_list = image_parameters['Particle Radius List']
     image_half_size = image_parameters['Image Half-Size']
 
-
     targetBinaryImage = np.zeros((2*image_half_size+1, 2*image_half_size+1))
 
     for particle_index in range(0, len(particle_center_x_list)):
@@ -1170,16 +1168,18 @@ def get_target_binary_image(image_parameters):
         for pixel_x in range(int(np.floor(center_x-radius)), int(np.ceil(center_x+radius)+1)):
             for pixel_y in range(int(np.floor(center_y - radius)), int(np.ceil(center_y + radius) + 1)):
                 if((pixel_x - center_x)**2 + (pixel_y - center_y)**2 <= radius**2):
-                    targetBinaryImage[pixel_y+image_half_size, pixel_x+image_half_size] = 1
+                    targetBinaryImage[pixel_x+image_half_size, pixel_y+image_half_size] = 1
 
-        targetBinaryImage[image_half_size, image_half_size] = 0.5
-        targetBinaryImage = np.flipud(targetBinaryImage)
+    targetBinaryImage[image_half_size, image_half_size] = 0.5
 
-        plt.imshow(targetBinaryImage, cmap='Greys', interpolation='nearest',
+    targetBinaryImage[10, 10] = 0.5
+
+    plt.imshow(targetBinaryImage, cmap='Greys', interpolation='nearest', origin = 'lower',
                    extent=(-image_half_size, image_half_size, -image_half_size, image_half_size))
-        plt.colorbar()
-        plt.show()
-        return targetBinaryImage
+    plt.colorbar()
+    plt.show()
+
+    return targetBinaryImage
 
 
 
