@@ -189,6 +189,7 @@ def get_image_generator(image_parameters_function=lambda : get_image_parameters(
     while image_number<max_number_of_images:
         
         image_parameters = image_parameters_function()
+
         image = generate_image(image_parameters)
 
         yield image_number, image, image_parameters
@@ -1139,3 +1140,43 @@ def credits():
         'http://www.softmatterlab.org\n')
     
     return
+
+def get_target_binary_image(image_parameters):
+    """Create and return binary target image given image parameters
+    Input: Image parameters
+    Output: Binary image of the input image size where pixels containing particles are marked as ones, while rest are zeros
+    """
+
+    import numpy as np
+
+    import matplotlib.pyplot as plt
+
+    particle_center_x_list = image_parameters['Particle Center X List']
+    particle_center_y_list = image_parameters['Particle Center Y List']
+    particle_radius_list = image_parameters['Particle Radius List']
+    image_half_size = image_parameters['Image Half-Size']
+
+
+    targetBinaryImage = np.zeros((2*image_half_size+1, 2*image_half_size+1))
+
+    for particle_index in range(0, len(particle_center_x_list)):
+        center_x = particle_center_x_list[particle_index]
+        center_y = particle_center_y_list[particle_index]
+        radius = particle_radius_list[particle_index]
+
+        """Loops over all pixels with center in coordinates = [ceil(center - radius): floor(center + radius)]. Adds the ones with
+        center within radius.
+        """
+        for pixel_x in range(int(np.floor(center_x-radius)), int(np.ceil(center_x+radius)+1)):
+            for pixel_y in range(int(np.floor(center_y - radius)), int(np.ceil(center_y + radius) + 1)):
+                if((pixel_x - center_x)**2 + (pixel_y - center_y)**2 <= radius**2):
+                    targetBinaryImage[pixel_y+image_half_size, pixel_x+image_half_size] = 1
+
+        targetBinaryImage[image_half_size, image_half_size] = 0.5
+        targetBinaryImage = np.flipud(targetBinaryImage)
+
+        plt.imshow(targetBinaryImage, cmap='Greys', interpolation='nearest',
+                   extent=(-image_half_size, image_half_size, -image_half_size, image_half_size))
+        plt.colorbar()
+        plt.show()
+        return targetBinaryImage
