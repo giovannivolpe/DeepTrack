@@ -1,3 +1,5 @@
+from keras.layers import *
+
 def create_unet(pretrained_weights = None, input_size = (51,51,1)):
     """Creates a unet
     Inputs:
@@ -108,10 +110,10 @@ def get_target_binary_image(image_parameters):
 
     targetBinaryImage[10, 10] = 0.5
 
-    plt.imshow(targetBinaryImage, cmap='Greys', interpolation='nearest', origin = 'lower',
-                   extent=(-image_half_size, image_half_size, -image_half_size, image_half_size))
-    plt.colorbar()
-    plt.show()
+#    plt.imshow(targetBinaryImage, cmap='Greys', interpolation='nearest', origin = 'lower',
+ #                  extent=(-image_half_size, image_half_size, -image_half_size, image_half_size))
+  #  plt.colorbar()
+   # plt.show()
 
     return targetBinaryImage
 
@@ -413,6 +415,8 @@ def train_deep_learning_network(
             # training_history['MAE'].append(mae)
 
             if not(iteration%int(verbose**-1)):
-                print('Sample size %6d   iteration number %6d Time %10.2f ms' % (sample_size, iteration + 1, mse, mae, iteration_time * 1000))
+                print('Sample size %6d   iteration number %6d Time %10.2f ms' % (sample_size, iteration + 1, iteration_time * 1000))
                 
     return training_history
+
+
