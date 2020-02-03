@@ -369,6 +369,7 @@ def train_deep_learning_network(
     training_history['Sample Size'] = []
     training_history['Iteration Number'] = []
     training_history['Iteration Time'] = []
+    training_history['accuracy'] = []
     
     for sample_size, iteration_number in zip(sample_sizes, iteration_numbers):
         for iteration in range(iteration_number):
@@ -405,12 +406,14 @@ def train_deep_learning_network(
             iteration_time = time() - initial_time
 
             # record training history
+            accuracy = history.history.get('acc')[-1]
             # mse = history.history['mean_squared_error'][0] * half_image_size**2
             # mae = history.history['mean_absolute_error'][0] * half_image_size
                         
             training_history['Sample Size'].append(sample_size)
             training_history['Iteration Number'].append(iteration)
             training_history['Iteration Time'].append(iteration_time)
+            training_history['accuracy'].append(accuracy)
             # training_history['MSE'].append(mse)
             # training_history['MAE'].append(mae)
 
@@ -419,4 +422,39 @@ def train_deep_learning_network(
                 
     return training_history
 
+
+def plot_learning_performance(training_history, number_of_timesteps_for_average = 100, figsize=(20,20)):
+    """Plot the learning performance of the deep learning network.
+    
+    Input:
+    training_history: dictionary with training history, typically obtained from train_deep_learning_network()
+    number_of_timesteps_for_average: length of the average [positive integer number]
+    figsize: figure size [list of two positive numbers]
+        
+    Output: none
+    """    
+
+    import matplotlib.pyplot as plt
+    from numpy import convolve, ones
+    
+    plt.figure(figsize=figsize)
+
+    plt.subplot(5, 1, 1)
+    plt.semilogy(training_history['accuracy'], 'k')
+    plt.semilogy(convolve(training_history['accuracy'], ones(number_of_timesteps_for_average) / number_of_timesteps_for_average, mode='valid'), 'r')
+    plt.ylabel('accuracy', fontsize=24)
+
+    plt.subplot(5, 1, 3)
+    plt.plot(training_history['Sample Size'], 'k')
+    plt.ylabel('Sample size', fontsize=24)
+
+    plt.subplot(5, 1, 4)
+    plt.plot(training_history['Iteration Number'], 'k')
+    plt.ylabel('Iteration number', fontsize=24)
+
+    plt.subplot(5, 1, 5)
+    plt.plot(training_history['Iteration Time'], 'k')
+    plt.ylabel('Iteration time', fontsize=24)
+
+    plt.show()
 
