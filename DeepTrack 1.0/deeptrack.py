@@ -70,6 +70,7 @@ def get_image_parameters(
     return image_parameters
 
 def generate_image(image_parameters):
+    
     """Generate image with particles.
     
     Input:
@@ -92,7 +93,8 @@ def generate_image(image_parameters):
     Output:
     image: image of the particle [2D numpy array of real numbers betwen 0 and 1]
     """
-    
+
+
     from numpy import meshgrid, arange, ones, zeros, sin, cos, sqrt, clip, array
     from scipy.special import jv as bessel
     from numpy.random import poisson as poisson
@@ -110,6 +112,7 @@ def generate_image(image_parameters):
     ellipsoidal_orientation_list = image_parameters['Ellipsoid Orientation']
     ellipticity = image_parameters['Ellipticity']
     
+
     ### CALCULATE IMAGE PARAMETERS
     # calculate image full size
     image_size = image_half_size * 2 + 1
@@ -120,6 +123,9 @@ def generate_image(image_parameters):
                                                       sparse=False, 
                                                       indexing='ij')
 
+    
+
+
     ### CALCULATE BACKGROUND
     # initialize the image at the background level
     image_background = ones((image_size, image_size)) * image_background_level
@@ -129,15 +135,20 @@ def generate_image(image_parameters):
         image_background = image_background + gradient_intensity * (image_coordinate_x * sin(gradient_direction) + 
                                                                     image_coordinate_y * cos(gradient_direction) ) / (sqrt(2) * image_size)
 
+    
+
     ### CALCULATE IMAGE PARTICLES
     image_particles = zeros((image_size, image_size))
     for particle_center_x, particle_center_y, particle_radius, particle_bessel_orders, particle_intensities, ellipsoidal_orientation in zip(particle_center_x_list, particle_center_y_list, particle_radius_list, particle_bessel_orders_list, particle_intensities_list, ellipsoidal_orientation_list):
+    
+    
         # calculate the radial distance from the center of the particle 
         # normalized by the particle radius
         radial_distance_from_particle = sqrt((image_coordinate_x - particle_center_x)**2 
                                          + (image_coordinate_y - particle_center_y)**2 
                                          + .001**2) / particle_radius
         
+
         # for elliptical particles
         rotated_distance_x = (image_coordinate_x - particle_center_x)*cos(ellipsoidal_orientation) + (image_coordinate_y - particle_center_y)*sin(ellipsoidal_orientation)
         rotated_distance_y = -(image_coordinate_x - particle_center_x)*sin(ellipsoidal_orientation) + (image_coordinate_y - particle_center_y)*cos(ellipsoidal_orientation)
@@ -147,10 +158,13 @@ def generate_image(image_parameters):
                                          + (rotated_distance_y / ellipticity)**2 
                                          + .001**2) / particle_radius
 
+
         # calculate particle profile
         for particle_bessel_order, particle_intensity in zip(particle_bessel_orders, particle_intensities):
             image_particle = 4 * particle_bessel_order**2.5 * (bessel(particle_bessel_order, elliptical_distance_from_particle) / elliptical_distance_from_particle)**2
             image_particles = image_particles + particle_intensity * image_particle
+
+        
 
     # calculate image without noise as background image plus particle image
     image_particles_without_noise = clip(image_background + image_particles, 0, 1)
@@ -158,6 +172,7 @@ def generate_image(image_parameters):
     ### ADD NOISE
     image_particles_with_noise = poisson(image_particles_without_noise * signal_to_noise_ratio**2) / signal_to_noise_ratio**2
     
+
     return image_particles_with_noise
 
 def get_image_generator(image_parameters_function=lambda : get_image_parameters(), max_number_of_images=1e+9):
@@ -488,8 +503,7 @@ def predict(network, image):
     predicted_position = half_image_size * predicted_position[0]
    
         
-    return predicted_position
-    
+    return predicted_position    
 
 def plot_prediction(image, image_parameters, predicted_position, figsize=(15, 5)):
     """Plot a sample image.
@@ -1118,7 +1132,6 @@ def load(saved_network_file_name):
     network = load_model(saved_network_file_name)
     
     return network
-
 
 def credits():
     """Credits for DeepTrack 1.0.
