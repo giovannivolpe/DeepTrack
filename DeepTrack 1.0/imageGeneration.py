@@ -1,11 +1,3 @@
-from __future__ import print_function
-from keras.preprocessing.image import ImageDataGenerator
-import numpy as np 
-import os
-import glob
-import skimage.io as io
-import skimage.transform as trans
-
 def get_target_binary_image(image_parameters):
     """Create and return binary target image given image parameters
     Input: Image parameters
@@ -14,7 +6,6 @@ def get_target_binary_image(image_parameters):
 
     import numpy as np
 
-    import matplotlib.pyplot as plt
 
     particle_center_x_list = image_parameters['Particle Center X List']
     particle_center_y_list = image_parameters['Particle Center Y List']
@@ -265,6 +256,8 @@ def save_image_and_target(image_number,image,image_parameters, image_path, targe
     cv2.imwrite(target_path + "/" + str(image_number) + '.png', target*255)
 
 def adjustData(img,mask,flag_multi_class,num_class):
+    import numpy as np
+
     if(flag_multi_class):
         img = img / 255
         mask = mask[:,:,:,0] if(len(mask.shape) == 4) else mask[:,:,0]
@@ -292,6 +285,8 @@ def trainGenerator(batch_size,train_path,image_folder,mask_folder,aug_dict,image
     use the same seed for image_datagen and mask_datagen to ensure the transformation for image and mask is the same
     if you want to visualize the results of generator, set save_to_dir = "your path"
     '''
+    from keras.preprocessing.image import ImageDataGenerator
+
     import cv2
     image_datagen = ImageDataGenerator(**aug_dict)
     mask_datagen = ImageDataGenerator(**aug_dict)
@@ -321,6 +316,11 @@ def trainGenerator(batch_size,train_path,image_folder,mask_folder,aug_dict,image
         yield (img,mask)
 
 def testGenerator(test_path,num_image = 30,target_size = (256,256),flag_multi_class = False,as_gray = True):
+    import skimage.transform as trans
+    import skimage.io as io
+    import os
+    import numpy as np
+
     for i in range(num_image):
         img = io.imread(os.path.join(test_path,"%d.png"%i),as_gray = as_gray)
         img = img / 255
@@ -330,6 +330,11 @@ def testGenerator(test_path,num_image = 30,target_size = (256,256),flag_multi_cl
         yield img
 
 def geneTrainNpy(image_path,mask_path,flag_multi_class = False,num_class = 2,image_prefix = "image",mask_prefix = "mask",image_as_gray = True,mask_as_gray = True):
+    import skimage.io as io
+    import glob
+    import os
+    import numpy as np
+
     image_name_arr = glob.glob(os.path.join(image_path,"%s*.png"%image_prefix))
     image_arr = []
     mask_arr = []
@@ -346,6 +351,8 @@ def geneTrainNpy(image_path,mask_path,flag_multi_class = False,num_class = 2,ima
     return image_arr,mask_arr
 
 def labelVisualize(num_class,color_dict,img):
+    import numpy as np
+
     img = img[:,:,0] if len(img.shape) == 3 else img
     img_out = np.zeros(img.shape + (3,))
     for i in range(num_class):
@@ -353,26 +360,40 @@ def labelVisualize(num_class,color_dict,img):
     return img_out / 255
 
 def saveResult(save_path,npyfile,flag_multi_class = False,num_class = 2):
+    import skimage.io as io
+    import os
+
     for i,item in enumerate(npyfile):
         img = labelVisualize(num_class,COLOR_DICT,item) if flag_multi_class else item[:,:,0]
         io.imsave(os.path.join(save_path,"%d_predict.png"%i),img)
 
 
+def get_padding(input_size, n):
+    """Adds padding to the input image
+    Inputs:
+    input: the input image
+    input_size: the size of the input image
+    n: the input image dimensions are changed to be divisible by 2**n
 
-## No idea what this is for
+    Outputs:
+    padding: the padding that was used
+    """
+    C0 = 2 ** (n - 1)
+    C1 = 2 ** (n - 1)
+    if (input_size[0] % 8 != 0):
+        top_pad = (input_size[0] % (2 * n) // 2);
+        bottom_pad = (input_size[0] % (2 * n) - top_pad)
+    else:
+        top_pad = 0;
+        bottom_pad = 0;
+        C0 = 0
+    if input_size[1] % 8 != 0:
+        left_pad = (input_size[1] % (2 * n) // 2);
+        right_pad = (input_size[1] % (2 * n) - left_pad)
+    else:
+        left_pad = 0;
+        right_pad = 0;
+        C1 = 0
+    padding = ((C0 - top_pad, C0 - bottom_pad), (C1 - left_pad, C1 - right_pad))
 
-Sky = [128,128,128]
-Building = [128,0,0]
-Pole = [192,192,128]
-Road = [128,64,128]
-Pavement = [60,40,222]
-Tree = [128,128,0]
-SignSymbol = [192,128,128]
-Fence = [64,64,128]
-Car = [64,0,128]
-Pedestrian = [64,64,0]
-Bicyclist = [0,128,192]
-Unlabelled = [0,0,0]
-
-COLOR_DICT = np.array([Sky, Building, Pole, Road, Pavement,
-                          Tree, SignSymbol, Fence, Car, Pedestrian, Bicyclist, Unlabelled])
+    return (padding)
