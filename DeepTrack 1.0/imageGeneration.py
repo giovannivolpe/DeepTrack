@@ -364,18 +364,18 @@ def get_padding(input_size, n):
     C0 = 2 ** (n - 1)
     C1 = 2 ** (n - 1)
     if (input_size[0] % 8 != 0):
-        top_pad = (input_size[0] % (2 * n) // 2);
+        top_pad = (input_size[0] % (2 * n) // 2)
         bottom_pad = (input_size[0] % (2 * n) - top_pad)
     else:
-        top_pad = 0;
-        bottom_pad = 0;
+        top_pad = 0
+        bottom_pad = 0
         C0 = 0
     if input_size[1] % 8 != 0:
-        left_pad = (input_size[1] % (2 * n) // 2);
+        left_pad = (input_size[1] % (2 * n) // 2)
         right_pad = (input_size[1] % (2 * n) - left_pad)
     else:
-        left_pad = 0;
-        right_pad = 0;
+        left_pad = 0
+        right_pad = 0
         C1 = 0
     padding = ((C0 - top_pad, C0 - bottom_pad), (C1 - left_pad, C1 - right_pad))
 
