@@ -365,7 +365,7 @@ def saveResult(save_path,npyfile,flag_multi_class = False,num_class = 2):
 
     for i,item in enumerate(npyfile):
         img = labelVisualize(num_class,COLOR_DICT,item) if flag_multi_class else item[:,:,0]
-        io.imsave(os.path.join(save_path,"%d_predict.png"%i),img)
+        io.imsave(os.path.join('data/particles/train/images',"particle_%d.png"%image_number),image
 
 
 def get_padding(input_size, n):
@@ -397,3 +397,4 @@ def get_padding(input_size, n):
     padding = ((C0 - top_pad, C0 - bottom_pad), (C1 - left_pad, C1 - right_pad))
 
     return (padding)
+

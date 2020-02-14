@@ -62,36 +62,6 @@ def get_image_parameters(
 
     return image_parameters
 
-def get_particle_positions(particle_number=2,particle_distance=10,image_size = 128):
-    """Generates multiple particle x- and y-coordinates with respect to each other.
-    
-    Inputs:  
-    particle_number: number of particles to generate coordinates for
-    first_particle_range: allowed x- and y-range of the centermost particle
-    other_particle_range: allowed x- and y-range for all other particles
-    particle_distance: particle interdistance
-    
-    Output:
-    particles_center_x: list of x-coordinates for the particles
-    particles_center_y: list of y-coordinates for the particles
-    """
-
-    from numpy.random import uniform
-    
-    particle_centers=[]
-    while len(particle_centers) < particle_number:
-        (x,y) = (uniform(0,image_size), uniform(0,image_size))
-        if all(((x-coord[0])**2+(y-coord[1])**2)**0.5 > particle_distance for coord in particle_centers):
-            particle_centers.append([x,y])
-
-    particle_centers_x=[]
-    particle_centers_y=[]
-    for coordinates in particle_centers:
-        particle_centers_x.append(coordinates[0])
-        particle_centers_y.append(coordinates[1])
-    
-    return (particle_centers_x, particle_centers_y)
-
 def get_image_parameters_preconfig():
 
     from numpy.random import uniform, randint
@@ -124,6 +94,45 @@ def get_image_parameters_preconfig():
         ellipticity= lambda: 1)
 
     return image_parameters
+
+def get_aug_parameters():
+    return dict(rotation_range=0.2,
+    width_shift_range=0.05,
+    height_shift_range=0.05,
+    shear_range=0.05,
+    zoom_range=0.05,
+    horizontal_flip=True,
+    fill_mode='nearest')
+
+def get_particle_positions(particle_number=2,particle_distance=10,image_size = 128):
+    """Generates multiple particle x- and y-coordinates with respect to each other.
+    
+    Inputs:  
+    particle_number: number of particles to generate coordinates for
+    first_particle_range: allowed x- and y-range of the centermost particle
+    other_particle_range: allowed x- and y-range for all other particles
+    particle_distance: particle interdistance
+    
+    Output:
+    particles_center_x: list of x-coordinates for the particles
+    particles_center_y: list of y-coordinates for the particles
+    """
+
+    from numpy.random import uniform
+    
+    particle_centers=[]
+    while len(particle_centers) < particle_number:
+        (x,y) = (uniform(0,image_size), uniform(0,image_size))
+        if all(((x-coord[0])**2+(y-coord[1])**2)**0.5 > particle_distance for coord in particle_centers):
+            particle_centers.append([x,y])
+
+    particle_centers_x=[]
+    particle_centers_y=[]
+    for coordinates in particle_centers:
+        particle_centers_x.append(coordinates[0])
+        particle_centers_y.append(coordinates[1])
+    
+    return (particle_centers_x, particle_centers_y)
 
 def get_image(image_parameters, use_gpu=False):
     """Generate image with particles.
@@ -286,7 +295,54 @@ def get_batch(get_image_parameters = lambda: get_image_parameters_preconfig(),
 
     return (image_batch, label_batch)
 
-def save_batch(batch, label_path, image_path, image_filename='image', label_filename='label'):
-    print('Not yet implemented')
+def save_batch(batch, label_path='data/', image_path='data/', image_filename='image', label_filename='label'):
+    
+    from skimage.io import imsave
+    from os.path import join
+    
+    (image_batch, label_batch) = batch
+    (number_of_images, image_size_x, image_size_y) = image_batch()
 
+    for i in range(number_of_images):
+        imsave(join(image_path, image_filename +"%d.png"%i),image_batch[i,:,:])
+        imsave(join(label_path, label_filename +"%d.png"%i),label_batch[i,:,:])
 
+    return
+
+def generator_for_training(get_batch = lambda: get_batch(), aug_parameters = get_aug_parameters()):
+
+    from keras.preprocessing.image import ImageDataGenerator
+
+    (image_batch, label_batch) = get_batch()
+    data_generator = ImageDataGenerator(**aug_parameters)
+    return data_generator.flow(image_batch, label_batch, batch_size=32)
+    #Som jag fattar det, batch size här är hur många augmenterade bilder den genererar från grunddatan
+     
+def generator_for_training_load(image_path, label_path, aug_parameters = get_aug_parameters()):
+
+    from keras.preprocessing.image import ImageDataGenerator
+    image_datagenerator = ImageDataGenerator(**aug_parameters)
+    label_datagenerator = ImageDataGenerator(**aug_parameters)
+
+    # Provide the same seed and keyword arguments to the fit and flow methods
+    seed = 1
+    image_generator = image_datagenerator.flow_from_directory(
+        image_path,
+        class_mode=None,
+        seed=seed)
+
+    label_generator = label_datagenerator.flow_from_directory(
+        label_path,
+        class_mode=None,
+        seed=seed)
+
+    # combine generators into one which yields image and masks
+    return zip(image_generator, mask_generator)
+
+def generator_for_prediction(filename):
+    import matplotlib.pyplot as plt
+    image_batch = plt.imread(filename)
+    (number_of_images, image_size_x, image_size_y) = image_batch.shape()
+
+    for i in range(number_of_images):
+        yield image_batch[i,:,:]
