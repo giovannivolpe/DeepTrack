@@ -19,7 +19,7 @@ def get_image_parameters(
     particle_radius_list: radii of the particles [px, list of real numbers]
     particle_bessel_orders_list: Bessel orders of the particles [list (of lists) of positive integers]
     particle_intensities_list: intensities of the particles [list (of lists) of real numbers, normalized to 1]
-    image_half_size: half size of the image in pixels [px, positive integer]
+    image_size: size of the image in pixels [px, positive integer]
     image_background_level: background level [real number normalized to 1]
     signal_to_noise_ratio: signal to noise ratio [positive real number]
     gradient_intensity: gradient intensity [real number normalized to 1]
@@ -37,7 +37,7 @@ def get_image_parameters(
         image_parameters['Particle Radius List']
         image_parameters['Particle Bessel Orders List']
         image_parameters['Particle Intensities List']
-        image_parameters['Image Half-Size']
+        image_parameters['Image Size']
         image_parameters['Image Background Level']
         image_parameters['Signal to Noise Ratio']
         image_parameters['Gradient Intensity']
@@ -45,23 +45,6 @@ def get_image_parameters(
         image_parameters['Ellipsoid Orientation']
         image_parameters['Ellipticity']
     """
-<<<<<<< HEAD
-
-    image_number = 0
-    while image_number < max_number_of_images:
-        image_parameters = image_parameters_function()
-        image = generate_image(image_parameters,with_gpu=True)
-        image2 = generate_image(image_parameters,with_gpu=False)
-        target = get_target_binary_image(image_parameters)
-
-        yield image_number, image, image2, image_parameters, target
-        image_number += 1
-
-def generate_image(image_parameters, with_gpu = False):
-    
-    """Generate image with particles.
-    
-=======
     
     image_parameters = {}
     image_parameters['Particle Center X List'] = particle_center_x_list()
@@ -153,7 +136,6 @@ def get_particle_positions(particle_number=2,particle_distance=10,image_size = 1
 
 def get_image(image_parameters, use_gpu=False):
     """Generate image with particles.
->>>>>>> origin/master
     Input:
     image_parameters: list with the values of the image parameters in a dictionary:
         image_parameters['Particle Center X List']
@@ -161,7 +143,7 @@ def get_image(image_parameters, use_gpu=False):
         image_parameters['Particle Radius List']
         image_parameters['Particle Bessel Orders List']
         image_parameters['Particle Intensities List']
-        image_parameters['Image Half-Size']
+        image_parameters['Image Size']
         image_parameters['Image Background Level']
         image_parameters['Signal to Noise Ratio']
         image_parameters['Gradient Intensity']
@@ -175,7 +157,6 @@ def get_image(image_parameters, use_gpu=False):
     image: image of the particle [2D numpy array of real numbers betwen 0 and 1]
     """
 
-<<<<<<< HEAD
 
     from numpy import meshgrid, arange, ones, zeros, sin, cos, sqrt, clip, array
     from numpy.random import poisson as poisson
@@ -185,7 +166,7 @@ def get_image(image_parameters, use_gpu=False):
     particle_radius_list = image_parameters['Particle Radius List']
     particle_bessel_orders_list = image_parameters['Particle Bessel Orders List']
     particle_intensities_list = image_parameters['Particle Intensities List']
-    image_half_size = image_parameters['Image Half-Size'] 
+    image_size = image_parameters['Image Size'] 
     image_background_level = image_parameters['Image Background Level']
     signal_to_noise_ratio = image_parameters['Signal to Noise Ratio']
     gradient_intensity = image_parameters['Gradient Intensity']
@@ -194,17 +175,15 @@ def get_image(image_parameters, use_gpu=False):
     ellipticity = image_parameters['Ellipticity']
     
 
-    ### CALCULATE IMAGE PARAMETERS
-    # calculate image full size
-    image_size = image_half_size * 2 + 1    
+    ### CALCULATE IMAGE PARAMETERS   
     
     ### CALCULATE BACKGROUND
     # initialize the image at the background level
     image_background = ones((image_size, image_size)) * image_background_level
 
     # calculate matrix coordinates from the center of the image
-    image_coordinate_x, image_coordinate_y = meshgrid(arange(-image_half_size, image_half_size + 1), 
-                                                      arange(-image_half_size, image_half_size + 1), 
+    image_coordinate_x, image_coordinate_y = meshgrid(arange(0, image_size), 
+                                                      arange(0, image_size), 
                                                       sparse=False, 
                                                       indexing='ij')
     
@@ -216,19 +195,10 @@ def get_image(image_parameters, use_gpu=False):
     ### CALCULATE IMAGE PARTICLES
     image_particles = zeros((image_size, image_size))
 
-
-    
-
     # calculate the particle profiles of all particles and add them to image_particles
-    if(with_gpu):
-        # shift particle centers so that the origin is in top left corner of image instead of the center. 
-        #TODO: this solution is not optimal, work in same coordinate system from the beginning instead.
-        particle_center_x_list = particle_center_x_list + image_half_size
-        particle_center_y_list = particle_center_y_list + image_half_size
-        
+    if(use_gpu):
         calc_particle_profile_gpu(particle_center_x_list, particle_center_y_list,particle_radius_list, image_particles,particle_intensities_list)
     else:
-        from numpy import meshgrid, arange, ones, zeros, sin, cos, sqrt, clip, array
         from scipy.special import jv as bessel
         
         for particle_center_x, particle_center_y, particle_radius, particle_bessel_orders, particle_intensities, ellipsoidal_orientation in zip(particle_center_x_list, particle_center_y_list, particle_radius_list, particle_bessel_orders_list, particle_intensities_list, ellipsoidal_orientation_list):
@@ -307,96 +277,70 @@ def calc_particle_profile_gpu(particle_center_x_list, particle_center_y_list,par
     # retrieve our image particle matrix from GPU
     d_img_part.copy_to_host(image_particles, stream = stream)
 
+def draw_image(img):
+    from matplotlib import pyplot as plt
+    plt.imshow(img, cmap='gray')
+    plt.show()
+
 def plot_sample_image(image, image_parameters, figsize=(15, 5)):
-    """Plot a sample image.
+    """
+    Plot a sample image.
 
     Inputs:
     image: image of the particles
     image_parameters: list with the values of the image parameters
     figsize: figure size [list of two positive numbers]
-=======
-    if (use_gpu):
-        print('GPU not yet implemented')
-    else:
-        from numpy import meshgrid, arange, ones, zeros, sin, cos, sqrt, clip, array
-        from scipy.special import jv as bessel
-        from numpy.random import poisson as poisson
-        
-        particle_center_x_list = image_parameters['Particle Center X List']
-        particle_center_y_list = image_parameters['Particle Center Y List']
-        particle_radius_list = image_parameters['Particle Radius List']
-        particle_bessel_orders_list = image_parameters['Particle Bessel Orders List']
-        particle_intensities_list = image_parameters['Particle Intensities List']
-        image_size = image_parameters['Image Size'] 
-        image_background_level = image_parameters['Image Background Level']
-        signal_to_noise_ratio = image_parameters['Signal to Noise Ratio']
-        gradient_intensity = image_parameters['Gradient Intensity']
-        gradient_direction = image_parameters['Gradient Direction']
-        ellipsoidal_orientation_list = image_parameters['Ellipsoid Orientation']
-        ellipticity = image_parameters['Ellipticity']
-        
-
-        ### CALCULATE IMAGE PARAMETERS
-        # calculate image full size
-        image_size = image_size
-
-        # calculate matrix coordinates from the center of the image
-        image_coordinate_x, image_coordinate_y = meshgrid(arange(image_size), 
-                                                        arange(image_size), 
-                                                        sparse=False, 
-                                                        indexing='ij')
->>>>>>> origin/master
-
+    """
     
 
-        ### CALCULATE BACKGROUND
-        # initialize the image at the background level
-        image_background = ones((image_size, image_size)) * image_background_level
-        
-        # add gradient to image background
-        if gradient_intensity!=0:
-            image_background = image_background + gradient_intensity * (image_coordinate_x * sin(gradient_direction) + 
-                                                                        image_coordinate_y * cos(gradient_direction) ) / (sqrt(2) * image_size)
+    ### CALCULATE BACKGROUND
+    # initialize the image at the background level
+    image_background = ones((image_size, image_size)) * image_background_level
+    
+    # add gradient to image background
+    if gradient_intensity!=0:
+        image_background = image_background + gradient_intensity * (image_coordinate_x * sin(gradient_direction) + 
+                                                                    image_coordinate_y * cos(gradient_direction) ) / (sqrt(2) * image_size)
 
         
 
-        ### CALCULATE IMAGE PARTICLES
-        image_particles = zeros((image_size, image_size))
-        for particle_center_x, particle_center_y, particle_radius, particle_bessel_orders, particle_intensities, ellipsoidal_orientation in zip(particle_center_x_list, particle_center_y_list, particle_radius_list, particle_bessel_orders_list, particle_intensities_list, ellipsoidal_orientation_list):
-        
-        
-            # calculate the radial distance from the center of the particle 
-            # normalized by the particle radius
-            radial_distance_from_particle = sqrt((image_coordinate_x - particle_center_x)**2 
-                                            + (image_coordinate_y - particle_center_y)**2 
-                                            + .001**2) / particle_radius
-            
-
-            # for elliptical particles
-            rotated_distance_x = (image_coordinate_x - particle_center_x)*cos(ellipsoidal_orientation) + (image_coordinate_y - particle_center_y)*sin(ellipsoidal_orientation)
-            rotated_distance_y = -(image_coordinate_x - particle_center_x)*sin(ellipsoidal_orientation) + (image_coordinate_y - particle_center_y)*cos(ellipsoidal_orientation)
-            
-            
-            elliptical_distance_from_particle = sqrt((rotated_distance_x)**2 
-                                            + (rotated_distance_y / ellipticity)**2 
-                                            + .001**2) / particle_radius
-
-
-            # calculate particle profile
-            for particle_bessel_order, particle_intensity in zip(particle_bessel_orders, particle_intensities):
-                image_particle = 4 * particle_bessel_order**2.5 * (bessel(particle_bessel_order, elliptical_distance_from_particle) / elliptical_distance_from_particle)**2
-                image_particles = image_particles + particle_intensity * image_particle
-
-            
-
-        # calculate image without noise as background image plus particle image
-        image_particles_without_noise = clip(image_background + image_particles, 0, 1)
-
-        ### ADD NOISE
-        image_particles_with_noise = poisson(image_particles_without_noise * signal_to_noise_ratio**2) / signal_to_noise_ratio**2
+    ### CALCULATE IMAGE PARTICLES
+    image_particles = zeros((image_size, image_size))
+    for particle_center_x, particle_center_y, particle_radius, particle_bessel_orders, particle_intensities, ellipsoidal_orientation in zip(particle_center_x_list, particle_center_y_list, particle_radius_list, particle_bessel_orders_list, particle_intensities_list, ellipsoidal_orientation_list):
+    
+    
+        # calculate the radial distance from the center of the particle 
+        # normalized by the particle radius
+        radial_distance_from_particle = sqrt((image_coordinate_x - particle_center_x)**2 
+                                        + (image_coordinate_y - particle_center_y)**2 
+                                        + .001**2) / particle_radius
         
 
-        return image_particles_with_noise
+        # for elliptical particles
+        rotated_distance_x = (image_coordinate_x - particle_center_x)*cos(ellipsoidal_orientation) + (image_coordinate_y - particle_center_y)*sin(ellipsoidal_orientation)
+        rotated_distance_y = -(image_coordinate_x - particle_center_x)*sin(ellipsoidal_orientation) + (image_coordinate_y - particle_center_y)*cos(ellipsoidal_orientation)
+        
+        
+        elliptical_distance_from_particle = sqrt((rotated_distance_x)**2 
+                                        + (rotated_distance_y / ellipticity)**2 
+                                        + .001**2) / particle_radius
+
+
+        # calculate particle profile
+        for particle_bessel_order, particle_intensity in zip(particle_bessel_orders, particle_intensities):
+            image_particle = 4 * particle_bessel_order**2.5 * (bessel(particle_bessel_order, elliptical_distance_from_particle) / elliptical_distance_from_particle)**2
+            image_particles = image_particles + particle_intensity * image_particle
+
+        
+
+    # calculate image without noise as background image plus particle image
+    image_particles_without_noise = clip(image_background + image_particles, 0, 1)
+
+    ### ADD NOISE
+    image_particles_with_noise = poisson(image_particles_without_noise * signal_to_noise_ratio**2) / signal_to_noise_ratio**2
+    
+
+    return image_particles_with_noise
 
 def get_label(image_parameters=get_image_parameters_preconfig(), use_gpu=False):
     """Create and return binary target image given image parameters
@@ -450,7 +394,7 @@ def get_batch(get_image_parameters = lambda: get_image_parameters_preconfig(),
         label_batch[i] = get_image(image_parameters, use_gpu) #WRONG!!! Only since get_label isn't working right now
 
     timetaken=time.time()-t
-    print(timetaken)
+    print("Time to create batch:",timetaken, "seconds.")
 
     return (image_batch, label_batch)
 
@@ -470,8 +414,6 @@ def save_batch(batch, label_path='data/', image_path='data/', image_filename='im
 
 def generator_for_training(get_batch = lambda: get_batch(), aug_parameters = get_aug_parameters()):
 
-<<<<<<< HEAD
-=======
     from keras.preprocessing.image import ImageDataGenerator
     import numpy as np
     (image_batch, label_batch) = get_batch()
@@ -512,7 +454,6 @@ def get_batch_load(filename):
     image_batch = reshape(image_batch, (image_batch.shape[0],image_batch.shape[1],image_batch.shape[2],1))
     return image_batch
 
->>>>>>> origin/master
 def get_padding(input_size, n):
     """Adds padding to the input image
     Inputs:
@@ -539,6 +480,6 @@ def get_padding(input_size, n):
         left_pad = 0
         right_pad = 0
         C1 = 0
-    padding = ((C0 - top_pad, C0 - bottom_pad), (C1 - left_pad, C1 - right_pad))
+        padding = ((C0 - top_pad, C0 - bottom_pad), (C1 - left_pad, C1 - right_pad))
 
     return (padding)
